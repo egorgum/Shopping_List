@@ -1,6 +1,8 @@
 package com.example.shoppinglist.presentation
 
 import android.content.ContentValues
+import android.content.ContentValues.TAG
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -12,7 +14,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.example.shoppinglist.R
-import com.example.shoppinglist.domain.ShopItem
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 
 class MainActivity : AppCompatActivity() {
 
@@ -24,11 +26,17 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         setupRecyclerView()
         viewModel = ViewModelProvider(this)[MainViewModel::class.java]
+        val buttonAddItem = findViewById<FloatingActionButton>(R.id.btAdd)
+        buttonAddItem.setOnClickListener {
+            val intent = ShopItemActivity.newIntentAddItem(this)
+            startActivity(intent)
+        }
         viewModel.shopList.observe(this){
             myAdapter.submitList(it)
         }
     }
     private fun setupRecyclerView(){
+
         val rvShopList = findViewById<RecyclerView>(R.id.rv)
         with(rvShopList){
             myAdapter = ShopListAdapter()
@@ -71,10 +79,11 @@ class MainActivity : AppCompatActivity() {
         itemTouchHelper.attachToRecyclerView(rvShopList)
     }
 
-    //Изменение элемента
+    //Переход на экран изменений
     private fun setupClickListener() {
         myAdapter.shopItemClick = {
-            viewModel.editShopItem(it)
+            val intent = ShopItemActivity.newIntentEditItem(this,it.id)
+            startActivity(intent)
         }
     }
 
@@ -84,5 +93,4 @@ class MainActivity : AppCompatActivity() {
             viewModel.changeStateShopItem(it)
         }
     }
-
 }
