@@ -7,23 +7,20 @@ import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.EditText
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import com.example.shoppinglist.R
+import com.example.shoppinglist.databinding.FragmentShopItemBinding
 import com.example.shoppinglist.domain.ShopItem
-import com.google.android.material.textfield.TextInputLayout
 
 class ShopItemFragment: Fragment() {
 
-    private lateinit var onEditingFinishedListener: OnEditingFinishedListener
+    private var _binding: FragmentShopItemBinding? = null
+    private val binding: FragmentShopItemBinding
+        get() = _binding?: throw RuntimeException("FragmentShopItemBinding == null")
+
     private lateinit var viewModel: ShopItemViewModel
-    private lateinit var tilName: TextInputLayout
-    private lateinit var tilCount: TextInputLayout
-    private lateinit var edName: EditText
-    private lateinit var edCount: EditText
-    private lateinit var btSave: Button
+
+    private lateinit var onEditingFinishedListener: OnEditingFinishedListener
 
     private var screenMode: String = MODE_UNKNOWN
     private var shopItemId: Int = ShopItem.UNDEFINED_ID
@@ -48,52 +45,31 @@ class ShopItemFragment: Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_shop_item,container,false)
+    ): View {
+        _binding =
+            FragmentShopItemBinding.inflate(
+                LayoutInflater.from(requireContext()),
+                container,
+                false
+            )
+        return binding.root
     }
 
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         viewModel = ViewModelProvider(this)[ShopItemViewModel::class.java]
-        initViews(view)
+        binding.viewModel = viewModel
+        binding.lifecycleOwner = viewLifecycleOwner
         addNameChangedListener()
         addCountChangedListener()
         launchRightScreenMode()
-        observeErrorInputCount()
-        observeErrorInputName()
         observeShouldCloseScreen()
     }
 
     private fun observeShouldCloseScreen(){
         viewModel.shouldCloseScreen.observe(viewLifecycleOwner){
             onEditingFinishedListener.onEditingFinished()
-        }
-    }
-
-    private fun  observeErrorInputCount(){
-        viewModel.errorInputCount.observe(viewLifecycleOwner){
-            val message =
-                if (it){
-                    getString(R.string.error_input_count)
-                }
-                else{
-                    null
-                }
-            tilCount.error = message
-        }
-    }
-
-    private fun observeErrorInputName(){
-        viewModel.errorInputName.observe(viewLifecycleOwner){
-            val message =
-                if (it){
-                    getString(R.string.error_input_name)
-                }
-                else{
-                    null
-                }
-            tilName.error = message
         }
     }
 
@@ -105,7 +81,7 @@ class ShopItemFragment: Fragment() {
     }
 
     private fun addNameChangedListener(){
-        edName.addTextChangedListener(object : TextWatcher {
+        binding.edName.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
             }
 
@@ -119,7 +95,7 @@ class ShopItemFragment: Fragment() {
     }
 
     private fun addCountChangedListener(){
-        edCount.addTextChangedListener(object : TextWatcher {
+        binding.edCount.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
             }
 
@@ -133,19 +109,15 @@ class ShopItemFragment: Fragment() {
     }
 
     private fun launchAddMode(){
-        btSave.setOnClickListener {
-            viewModel.addShopItem(edName.text?.toString(), edCount.text?.toString())
+        binding.btSave.setOnClickListener {
+            viewModel.addShopItem(binding.edName.text?.toString(), binding.edCount.text?.toString())
         }
     }
 
     private fun launchEditMode(){
         viewModel.getShopItem(shopItemId)
-        viewModel.shopItem.observe(viewLifecycleOwner){
-            edName.setText(it.name)
-            edCount.setText(it.count.toString())
-        }
-        btSave.setOnClickListener {
-            viewModel.editShopItem(edName.text?.toString(), edCount.text?.toString())
+        binding.btSave.setOnClickListener {
+            viewModel.editShopItem(binding.edName.text?.toString(), binding.edCount.text?.toString())
         }
 
     }
@@ -170,12 +142,9 @@ class ShopItemFragment: Fragment() {
         shopItemId = args.getInt(SHOP_ITEM_ID, ShopItem.UNDEFINED_ID)
     }
 
-    private fun initViews(view: View){
-        tilName = view.findViewById(R.id.tilName)
-        tilCount = view.findViewById(R.id.tilCount)
-        edName = view.findViewById(R.id.edName)
-        edCount = view.findViewById(R.id.edCount)
-        btSave = view.findViewById(R.id.btSave)
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 
     //Интерфейс, реализуемый в активити
